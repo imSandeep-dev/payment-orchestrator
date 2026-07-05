@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: payment-orchestrator
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:payflow_orchestrator}
+    username: ${DB_USERNAME:payflow}
+    password: ${DB_PASSWORD:payflow_dev_password}
+    driver-class-name: org.postgresql.Driver
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: ALWAYS
+
+logging:
+  level:
+    root: info
+    com.payflow.orchestrator: debug
