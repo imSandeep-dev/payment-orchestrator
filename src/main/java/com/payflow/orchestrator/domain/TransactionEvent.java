@@ -1,0 +1,36 @@
+package com.payflow.orchestrator.domain;
+
+/**
+ * Every event that can drive a transaction from one state to another.
+ * Matches the "Event" column of docs/state-machine.md exactly.
+ */
+public enum TransactionEvent {
+    ROUTE_SELECTED,
+    ABANDONED,
+    AUTH_INITIATED,
+    ROUTE_FAILED,
+    RETRY_ROUTE,
+    EXHAUSTED,
+    GATEWAY_AUTH_SUCCESS,
+    GATEWAY_AUTH_DECLINE,
+    GATEWAY_TIMEOUT,
+    FAILOVER,
+    CAPTURE_INITIATED,
+    VOID_INITIATED,
+    HOLD_EXPIRED,
+    GATEWAY_VOID_SUCCESS,
+    GATEWAY_CAPTURE_SUCCESS,
+    GATEWAY_PARTIAL_CAPTURE,
+    GATEWAY_CAPTURE_ERROR,
+    RETRY_CAPTURE,
+    REFUND_INITIATED,
+    GATEWAY_SETTLED,
+    DISPUTE_OPENED,
+    RECONCILIATION_OVERRIDE,
+    GATEWAY_REFUND_SUCCESS,
+    GATEWAY_PARTIAL_REFUND,
+    GATEWAY_REFUND_ERROR,
+    RETRY_REFUND,
+    DISPUTE_RESOLVED,
+    ADMIN_OVERRIDE
+}
