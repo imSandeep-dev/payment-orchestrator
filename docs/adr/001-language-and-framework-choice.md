@@ -1,7 +1,6 @@
 # ADR-001: Language, Framework, and Version Choice
 
-## Status
-Accepted — 2026-07-05
+
 
 ## Context
 The project spec (Section E1) allows Python/FastAPI, Node.js/TypeScript, or
@@ -22,7 +21,7 @@ the spec's required components.
 
 ## Version note
 As of July 2026, Spring Boot 3.x has reached full end-of-life (final patch
-3.5.16, June 25 2026). We are building on the current supported line,
+3.5.16, June 25, 2026). We are building on the current supported line,
 Spring Boot 4.1.0, rather than an EOL framework. This is a materially
 different major version from most existing tutorials/StackOverflow answers,
 with real breaking changes we must track through the project:
@@ -40,7 +39,7 @@ with real breaking changes we must track through the project:
   unit tests with mocked dependencies.
 - **Spring Security 7 (if/when we add it)** — lambda DSL only,
   `authorizeRequests()` is gone in favor of `authorizeHttpRequests()`.
-  Not yet relevant (API-key auth arrives Day 11-12) but noted for later.
+  Not yet relevant (API-key auth arrives Day 11–12) but noted for later.
 
 ## Alternatives Considered
 - **Python/FastAPI** — faster to prototype, excellent async support, but

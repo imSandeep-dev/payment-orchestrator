@@ -4,7 +4,7 @@ Payment Orchestration Layer with Multi-Gateway Failover — PayFlow Commerce sim
 
 ## Stack
 
-Java 21 · Spring Boot 4.1.0 · PostgreSQL 15 · Flyway · Spring Data JPA · Testcontainers
+Java 21 · Spring Boot 4.1.0 · PostgresSQL 15 · Flyways · Spring Data JPA · Test containers
 
 See `docs/adr/001-language-and-framework-choice.md` for the full rationale, including
 Spring Boot 4-specific notes (Jackson 3, modular starters, `@MockitoBean`).
@@ -14,30 +14,32 @@ Spring Boot 4-specific notes (Jackson 3, modular starters, `@MockitoBean`).
 - JDK 21
 - Maven 3.9+
 - Docker Desktop 24+ (required both for local Postgres AND for running integration tests,
-  which use Testcontainers to spin up a real disposable Postgres instance)
+  which use Test containers to spin up a real disposable Postgres instance)
 
 ## Running Locally
 
 1. Copy environment config:cp .env.example .env
-2. Start PostgreSQL: docker compose up -d
+2. Start PostgresSQL: docker compose up -d
 3. Run the application (Flyway migrations apply automatically on startup):mvn spring-boot:run
-   4. Verify:
-      curl http://localhost:8080/api/v1/health
-      Expected response:
+4. Verify:
+   curl http://localhost:8080/api/v1/health
+   Expected response:
 
-       ```json
-          {"status":"UP","service":"payment-orchestrator","timestamp":"...","components":{"database":"UP"}}
-       ```
+    ```json
+       {"status":"UP","service":"payment-orchestrator","timestamp":"...","components":{"database":"UP"}}
+    ```
     
-       ## Running Tests
+## Running Tests
     
-       Docker Desktop must be running — integration tests use Testcontainers, not the
-       `docker-compose` Postgres instance directly.
+Docker Desktop must be running — integration tests use Test containers, not the
+`docker-compose` Postgres instance directly.
+    
+mvn test # full suite
+- mvn test -Dtest=TransactionStateMachineTest # state machine only (fast, no DB)
+- mvn test -Dtest=GatewayResponseSanitizerTest # PII redaction only (fast, no DB)
+- mvn test -Dtest=TransactionPersistenceIT # persistence layer (needs Docker)
+- mvn test -Dtest=RazorpayAdapterTest,StripeAdapterTest  # gateway adapter contract tests (fast, no DB)
 
-      mvn test # full suite
-      mvn test -Dtest=TransactionStateMachineTest # state machine only (fast, no DB)
-      mvn test -Dtest=GatewayResponseSanitizerTest # PII redaction only (fast, no DB)
-      mvn test -Dtest=TransactionPersistenceIT # persistence layer (needs Docker)
 
 ## Project Structure
 
