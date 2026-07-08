@@ -3,11 +3,11 @@ package com.payflow.orchestrator.domain;
 import com.payflow.orchestrator.gateway.GatewayOutcome;
 
 /**
- * Translates a gateway's raw outcome (Section A1) into the TransactionEvent
- * vocabulary the state machine understands (Day 3).
+ * Translates a gateway's raw outcome into the TransactionEvent
+ * vocabulary the state machine understands.
  *
  * Scoped to the AUTHORIZE operation only for now — capture/refund/void
- * outcome mapping arrives Day 7+ as TransactionService builds out those
+ * outcome mapping arrives as TransactionService builds out those
  * flows, since each operation maps its outcomes onto a different set of
  * events (e.g., SUCCESS means GATEWAY_AUTH_SUCCESS during authorize, but
  * GATEWAY_CAPTURE_SUCCESS during capture).
@@ -19,7 +19,7 @@ public final class GatewayOutcomeMapper {
 
     /**
      * SERVER_ERROR and RATE_LIMITED are deliberately folded onto the same
-     * event as TIMEOUT: Section A1.1's failure-point table treats a gateway
+     * event as TIMEOUT: failure-point table treats a gateway
      * 5xx and a true timeout with the identical recovery action (retry/
      * failover). The state machine doesn't need to distinguish them — the
      * precise distinction is preserved in the audit trail's raw

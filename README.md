@@ -41,6 +41,8 @@ mvn test # full suite
 - mvn test "-Dtest=RazorpayAdapterTest, StripeAdapterTest" # gateway adapter contract tests (fast, no DB)
 - mvn test "-Dtest=PayUAdapterTest,UPIAdapterTest"
 - mvn test -Dtest=GatewayToStateMachineIntegrationTest
+- mvn test -Dtest=GatewayHealthMetricsSeedDataIT
+- mvn test -Dtest=GatewayRouterTest
 
 ## Project Structure
 
