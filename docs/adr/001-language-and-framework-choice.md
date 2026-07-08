@@ -6,7 +6,7 @@
 The project spec (Section E1) allows Python/FastAPI, Node.js/TypeScript, or
 Java/Kotlin with Spring Boot. We need a stack that supports: a strict
 transaction state machine, circuit breakers, distributed locking, connection
-pooling under load, and a mature testing story — all within a 15-day window.
+pooling under load, and a mature testing story — all within a window.
 
 ## Decision
 - **Language:** Java 21 (LTS)
@@ -29,17 +29,17 @@ with real breaking changes we must track through the project:
 - **Java 21 minimum** (not 17) — virtual threads available if useful later.
 - **Modular starters** — we're using `spring-boot-starter-classic` /
   `spring-boot-starter-test-classic` (a transition bundle Spring provides)
-  to avoid hunting for dozens of granular module names on Day 1. We may
+  to avoid hunting for dozens of granular module names. We may
   migrate to fine-grained starters later if it's instructive to do so.
 - **Jackson 3** — default JSON serialization behavior for dates/BigDecimal
   differs subtly from Jackson 2. We must verify this explicitly once we
-  serialize monetary `amount` fields (Day 3+).
+  serialize monetary `amount` fields.
 - **`@MockBean`/`@SpyBean` removed** — replaced by `@MockitoBean`/
-  `@MockitoSpyBean`. Relevant from Day 3 onward once we write service-layer
+  `@MockitoSpyBean`. once we write service-layer
   unit tests with mocked dependencies.
 - **Spring Security 7 (if/when we add it)** — lambda DSL only,
   `authorizeRequests()` is gone in favor of `authorizeHttpRequests()`.
-  Not yet relevant (API-key auth arrives Day 11–12) but noted for later.
+  Not yet relevant (API-key auth arrives) but noted for later.
 
 ## Alternatives Considered
 - **Python/FastAPI** — faster to prototype, excellent async support, but
@@ -51,6 +51,6 @@ with real breaking changes we must track through the project:
 
 ## Consequences
 - Team (i.e., me) must track Boot 4 migration guide gotchas throughout
-  the 15 days rather than relying purely on Boot 3.x-era muscle memory.
+  rather than relying purely on Boot 3.x-era muscle memory.
 - Resume value is strong: current Spring Boot + Java 21 + payments-domain
   patterns is directly relevant to fintech/banking engineering roles.

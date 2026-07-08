@@ -58,6 +58,10 @@ public abstract class PaymentGatewayContractTest {
         assertThat(result.retryAfterSeconds()).isNotNull().isPositive();
     }
 
+    protected GatewayOutcome expectedTimeoutOutcome() {
+        return GatewayOutcome.TIMEOUT;
+    }
+
     @Test
     void timeoutInstructionReturnsTimeoutPromptly() {
         long start = System.currentTimeMillis();
@@ -67,8 +71,7 @@ public abstract class PaymentGatewayContractTest {
 
         long elapsedMs = System.currentTimeMillis() - start;
 
-        assertThat(result.outcome()).isEqualTo(GatewayOutcome.TIMEOUT);
-        // See ADR-002: we do NOT block for the real 30-60s window.
+        assertThat(result.outcome()).isEqualTo(expectedTimeoutOutcome());  // CHANGED
         assertThat(elapsedMs).isLessThan(500);
     }
 

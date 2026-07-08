@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.payflow.orchestrator.domain.TransactionState.AUTH_INITIATED;
+
 @Component
 public class TransactionStateMachine {
 
@@ -47,15 +49,16 @@ public class TransactionStateMachine {
         addTransition(table, TransactionState.CREATED, TransactionEvent.ROUTE_SELECTED, TransactionState.ROUTE_SELECTED);
         addTransition(table, TransactionState.CREATED, TransactionEvent.ABANDONED, TransactionState.ABANDONED);
 
-        addTransition(table, TransactionState.ROUTE_SELECTED, TransactionEvent.AUTH_INITIATED, TransactionState.AUTH_INITIATED);
+        addTransition(table, TransactionState.ROUTE_SELECTED, TransactionEvent.AUTH_INITIATED, AUTH_INITIATED);
         addTransition(table, TransactionState.ROUTE_SELECTED, TransactionEvent.ROUTE_FAILED, TransactionState.ROUTE_FAILED);
 
         addTransition(table, TransactionState.ROUTE_FAILED, TransactionEvent.RETRY_ROUTE, TransactionState.ROUTE_SELECTED);
         addTransition(table, TransactionState.ROUTE_FAILED, TransactionEvent.EXHAUSTED, TransactionState.FAILED);
 
-        addTransition(table, TransactionState.AUTH_INITIATED, TransactionEvent.GATEWAY_AUTH_SUCCESS, TransactionState.AUTHORISED);
-        addTransition(table, TransactionState.AUTH_INITIATED, TransactionEvent.GATEWAY_AUTH_DECLINE, TransactionState.AUTH_FAILED);
-        addTransition(table, TransactionState.AUTH_INITIATED, TransactionEvent.GATEWAY_TIMEOUT, TransactionState.AUTH_TIMEOUT);
+        addTransition(table, AUTH_INITIATED, TransactionEvent.GATEWAY_AUTH_SUCCESS, TransactionState.AUTHORISED);
+        addTransition(table, AUTH_INITIATED, TransactionEvent.GATEWAY_AUTH_DECLINE, TransactionState.AUTH_FAILED);
+        addTransition(table, AUTH_INITIATED, TransactionEvent.GATEWAY_TIMEOUT, TransactionState.AUTH_TIMEOUT);
+        addTransition(table, AUTH_INITIATED, TransactionEvent.MANDATE_EXPIRED, TransactionState.AUTH_EXPIRED);
 
         addTransition(table, TransactionState.AUTH_TIMEOUT, TransactionEvent.FAILOVER, TransactionState.ROUTE_SELECTED);
         addTransition(table, TransactionState.AUTH_TIMEOUT, TransactionEvent.EXHAUSTED, TransactionState.FAILED);

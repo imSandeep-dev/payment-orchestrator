@@ -2,7 +2,7 @@
 
 ## Overview
 Twenty-four states, enforced in application code by `TransactionStateMachine`
-(Day 3–4). The database `state` column is `VARCHAR(30) + CHECK` — a
+. The database `state` column is `VARCHAR(30) + CHECK` — a
 data-integrity backstop, not the enforcement mechanism itself.
 
 ## Why more than the required 12 states
@@ -63,6 +63,7 @@ a concrete requirement elsewhere in the spec:
 | AUTH_INITIATED          | GATEWAY_AUTH_SUCCESS    | AUTHORISED                                 |
 | AUTH_INITIATED          | GATEWAY_AUTH_DECLINE    | AUTH_FAILED                                |
 | AUTH_INITIATED          | GATEWAY_TIMEOUT         | AUTH_TIMEOUT                               |
+| AUTH_INITIATED          | MANDATE_EXPIRED         | AUTH_EXPIRED                               ||
 | AUTH_TIMEOUT            | FAILOVER                | ROUTE_SELECTED                             |
 | AUTH_TIMEOUT            | EXHAUSTED               | FAILED                                     |
 | AUTH_FAILED             | RETRY_ROUTE             | ROUTE_SELECTED                             |
@@ -96,7 +97,7 @@ a concrete requirement elsewhere in the spec:
 | RECONCILIATION_MISMATCH | ADMIN_OVERRIDE          | (manual — target state chosen by reviewer) |
 
 Every row above becomes exactly one entry in the `TransactionStateMachine`'s
-transition map on Day 3–4. Any pair not listed here is illegal and must
+transition map. Any pair not listed here is illegal and must
 throw `InvalidStateTransitionException` (see FS-15).
 
 ## Diagram
@@ -113,6 +114,7 @@ stateDiagram-v2
     AUTH_INITIATED --> AUTHORISED
     AUTH_INITIATED --> AUTH_FAILED
     AUTH_INITIATED --> AUTH_TIMEOUT
+    AUTH_INITIATED --> AUTH_EXPIRED : mandate_expired (FS-12)
     AUTH_TIMEOUT --> ROUTE_SELECTED : failover
     AUTH_TIMEOUT --> FAILED : exhausted
     AUTH_FAILED --> ROUTE_SELECTED : retry
@@ -151,3 +153,17 @@ stateDiagram-v2
     DISPUTE_RESOLVED --> [*]
     FAILED --> [*]
 ​```
+
+## Amendments
+
+###  Added AUTH_INITIATED → AUTH_EXPIRED (event: MANDATE_EXPIRED)
+
+The original 39-transition table only modeled AUTH_EXPIRED as
+reachable from AUTHORISED via HOLD_EXPIRED — representing a card/net-banking auth hold's window elapsing unused. Implementing
+UPIAdapter against **FS-12** ("UPI Collect Flow Timeout") revealed this
+was incomplete: a UPI collect request nobody approves within the 5-minute
+mandate window never reaches AUTHORISED at all — it needs to go straight
+from AUTH_INITIATED to AUTH_EXPIRED. Added a dedicated MANDATE_EXPIRED
+event rather than overloading HOLD_EXPIRED, since the two represent
+genuinely different real-world triggers (elapsed capture window vs.
+customer non-response), even though they share a target state.

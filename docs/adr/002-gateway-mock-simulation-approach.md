@@ -18,7 +18,7 @@ X-Mock-Delay-Ms / X-Mock-Gateway-Down signals, deterministically.
    response*, target < 2 seconds. If our mock genuinely slept for 30+ real
    seconds before signaling failure, sub-2-second failover would be
    structurally impossible to demonstrate. What we test is the router's
-   reaction to a timeout signal (Day 7–8), not OS socket-timeout mechanics.
+   reaction to a timeout signal, not OS socket-timeout mechanics.
 
 3. **X-Mock-Delay-Ms IS honored as a real delay** — distinct from #2, this
    simulates realistic latency variance for the P95 benchmarks.
@@ -28,12 +28,29 @@ X-Mock-Delay-Ms / X-Mock-Gateway-Down signals, deterministically.
    and its A1.3 timeout constant.
 
 5. **MockInstruction is an explicit parameter today**, wired from real
-   X-Mock-* HTTP headers starting Day 11–12 (API layer translates headers
+   X-Mock-* HTTP headers starting (API layer translates headers
    into a MockInstruction, passed Controller → Service → Router → Adapter).
 
 ## Consequences
 - `PaymentGatewayContractTest` guarantees all four adapters stay behaviorally
   in sync — a bug fixed in one adapter's test can't silently persist in another.
-- (To be expanded Day 6): PayU's "Limited" auth+capture support and UPI's
+- (To be expanded): PayU's "Limited" auth+capture support and UPI's
   instant-settlement / collect-flow mandate window (FS-12) are gateway —
   specific quirks layered on top of this shared engine, not baked into it.
+
+## Amendment: PayU/UPI capture semantics and outcome consolidation
+
+- PayU and UPI both have `gateway_config.supports_auth_capture = FALSE`
+  (seed data) — modeled by making their `capture()` an idempotent
+  confirmation rather than a re-simulated call, since funds already moved
+  at authorization time for these two gateways.
+- `GatewayOutcome` gained `MANDATE_EXPIRED` (UPI-specific, FS-12) and
+  `NOT_SUPPORTED` (e.g., voiding UPI, which has no auth-hold).
+- `GatewayOutcomeMapper` deliberately consolidates `SERVER_ERROR` and
+  `RATE_LIMITED` onto the same `TransactionEvent.GATEWAY_TIMEOUT` as a true
+  timeout — all three warrant identical recovery (failover); the distinct
+  HTTP-level cause is preserved in the audit trail, not the state.
+- Building UPIAdapter against FS-12 surfaced a genuine gap in the
+  transition table (`AUTH_INITIATED` had no path to `AUTH_EXPIRED`) — fixed
+  via a new `MANDATE_EXPIRED` event. See `docs/state-machine.md`'s
+  "Amendments" section for the full explanation.

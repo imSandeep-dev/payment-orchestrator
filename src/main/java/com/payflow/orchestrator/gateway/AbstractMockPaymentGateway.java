@@ -3,15 +3,6 @@ package com.payflow.orchestrator.gateway;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Shared simulation engine for all four mock adapters (Section B4.3).
- * Concrete adapters supply only their identity and gateway-specific timeout
- * constant (Section A1.3) — the "how do we simulate each response type"
- * logic lives exactly once, here.
- *
- * See ADR-002 for why TIMEOUT returns promptly rather than literally
- * blocking for the real-world timeout window.
- */
 public abstract class AbstractMockPaymentGateway implements PaymentGateway {
 
     protected GatewayResult simulate(MockInstruction instruction, String operation) {
@@ -38,10 +29,20 @@ public abstract class AbstractMockPaymentGateway implements PaymentGateway {
             case RATE_LIMIT -> new GatewayResult(GatewayOutcome.RATE_LIMITED, null,
                     errorEnvelope(operation, "RATE_LIMIT_EXCEEDED"),
                     "Gateway rate limit exceeded", 2L);
-            case TIMEOUT -> new GatewayResult(GatewayOutcome.TIMEOUT, null,
-                    errorEnvelope(operation, "TIMEOUT"),
-                    "No response within " + getAuthTimeoutSeconds() + "s (simulated, see ADR-002)", null);
+            case TIMEOUT -> buildTimeoutResult(operation);   // CHANGED: now a hook was inline
         };
+    }
+
+    /**
+     * Hook method (Template Method pattern). Default represents a genuine
+     * network/gateway timeout — failover-eligible. UPIAdapter overrides
+     * this to represent a mandate-window expiry instead (FS-12), which is
+     * NOT failover-eligible (see GatewayOutcomeMapper).
+     */
+    protected GatewayResult buildTimeoutResult(String operation) {
+        return new GatewayResult(GatewayOutcome.TIMEOUT, null,
+                errorEnvelope(operation, "TIMEOUT"),
+                "No response within " + getAuthTimeoutSeconds() + "s (simulated, see ADR-002)", null);
     }
 
     private void applyConfiguredDelay(MockInstruction instruction) {
@@ -70,6 +71,5 @@ public abstract class AbstractMockPaymentGateway implements PaymentGateway {
                 .formatted(operation, errorCode, Instant.now());
     }
 
-    /** Per-gateway auth timeout in seconds — Section A1.3's comparison table. Informational only (see ADR-002). */
     protected abstract int getAuthTimeoutSeconds();
 }

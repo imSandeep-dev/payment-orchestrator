@@ -38,8 +38,9 @@ mvn test # full suite
 - mvn test -Dtest=TransactionStateMachineTest # state machine only (fast, no DB)
 - mvn test -Dtest=GatewayResponseSanitizerTest # PII redaction only (fast, no DB)
 - mvn test -Dtest=TransactionPersistenceIT # persistence layer (needs Docker)
-- mvn test -Dtest=RazorpayAdapterTest,StripeAdapterTest  # gateway adapter contract tests (fast, no DB)
-
+- mvn test "-Dtest=RazorpayAdapterTest, StripeAdapterTest" # gateway adapter contract tests (fast, no DB)
+- mvn test "-Dtest=PayUAdapterTest,UPIAdapterTest"
+- mvn test -Dtest=GatewayToStateMachineIntegrationTest
 
 ## Project Structure
 

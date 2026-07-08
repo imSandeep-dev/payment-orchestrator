@@ -67,7 +67,8 @@ class TransactionStateMachineTest {
                 Arguments.of(TransactionState.REFUND_INITIATED, TransactionEvent.GATEWAY_REFUND_ERROR, TransactionState.REFUND_FAILED),
                 Arguments.of(TransactionState.REFUND_FAILED, TransactionEvent.RETRY_REFUND, TransactionState.REFUND_INITIATED),
                 Arguments.of(TransactionState.PARTIALLY_REFUNDED, TransactionEvent.REFUND_INITIATED, TransactionState.REFUND_INITIATED),
-                Arguments.of(TransactionState.DISPUTE_OPENED, TransactionEvent.DISPUTE_RESOLVED, TransactionState.DISPUTE_RESOLVED)
+                Arguments.of(TransactionState.DISPUTE_OPENED, TransactionEvent.DISPUTE_RESOLVED, TransactionState.DISPUTE_RESOLVED),
+                Arguments.of(TransactionState.AUTH_INITIATED, TransactionEvent.MANDATE_EXPIRED, TransactionState.AUTH_EXPIRED)
         );
     }
 
