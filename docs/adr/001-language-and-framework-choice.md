@@ -40,6 +40,16 @@ with real breaking changes we must track through the project:
 - **Spring Security 7 (if/when we add it)** — lambda DSL only,
   `authorizeRequests()` is gone in favor of `authorizeHttpRequests()`.
   Not yet relevant (API-key auth arrives) but noted for later.
+- - **`TestRestTemplate` relocation, take two.** Initially assumed it moved to
+    `org.springframework.boot.resttestclient.TestRestTemplate` per the
+    `spring-boot-resttestclient` module — added that dependency and import,
+    but the bean still wasn't autoconfigured (same "no qualifying bean"
+    error, different package). Rather than keep guessing at Boot 4's exact
+    autoconfiguration trigger for TestRestTemplate, switched
+    RoutingConfigControllerIT to plain `RestTemplate` — no Boot-specific
+    autoconfiguration involved, so nothing to get wrong. Trade-off: plain
+    RestTemplate throws HttpStatusCodeException on 4xx/5xx instead of
+    returning them as a normal ResponseEntity, which the test now expects.
 
 ## Alternatives Considered
 - **Python/FastAPI** — faster to prototype, excellent async support, but

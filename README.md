@@ -43,6 +43,9 @@ mvn test # full suite
 - mvn test -Dtest=GatewayToStateMachineIntegrationTest
 - mvn test -Dtest=GatewayHealthMetricsSeedDataIT
 - mvn test -Dtest=GatewayRouterTest
+- mvn test -Dtest=CircuitBreakerTest # 9 tests, fast, no DB
+- mvn test -Dtest=GatewayFailoverExecutorTest # 6 tests, fast, no DB
+- mvn test -Dtest=RoutingConfigControllerIT # 3 tests, needs Docker
 
 ## Project Structure
 

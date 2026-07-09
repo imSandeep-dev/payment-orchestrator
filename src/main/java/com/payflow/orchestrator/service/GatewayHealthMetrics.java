@@ -1,6 +1,8 @@
 package com.payflow.orchestrator.service;
 
+import com.payflow.orchestrator.domain.GatewayConfig;
 import com.payflow.orchestrator.domain.GatewayHealthMetricsSnapshot;
+import com.payflow.orchestrator.repository.GatewayConfigRepository;
 import com.payflow.orchestrator.repository.GatewayHealthMetricsSnapshotRepository;
 import org.springframework.stereotype.Component;
 
@@ -30,13 +32,28 @@ public class GatewayHealthMetrics {
     private final Map<String, CopyOnWriteArrayList<Outcome>> liveOutcomes = new ConcurrentHashMap<>();
     private final GatewayHealthMetricsSnapshotRepository snapshotRepository;
 
-    public GatewayHealthMetrics(GatewayHealthMetricsSnapshotRepository snapshotRepository) {
+    private final GatewayConfigRepository gatewayConfigRepository;
+    private final CircuitBreaker circuitBreaker;
+
+    public GatewayHealthMetrics(GatewayHealthMetricsSnapshotRepository snapshotRepository,
+                                GatewayConfigRepository gatewayConfigRepository,
+                                CircuitBreaker circuitBreaker) {
         this.snapshotRepository = snapshotRepository;
+        this.gatewayConfigRepository = gatewayConfigRepository;
+        this.circuitBreaker = circuitBreaker;
     }
 
     public void recordOutcome(String gateway, String paymentMethod, boolean success, long latencyMs) {
         liveOutcomes.computeIfAbsent(key(gateway, paymentMethod), k -> new CopyOnWriteArrayList<>())
                 .add(new Outcome(Instant.now(), success, latencyMs));
+
+        GatewayConfig config = gatewayConfigRepository.findById(gateway)
+                .orElseThrow(() -> new IllegalStateException("Unknown gateway: " + gateway));
+        if (success) {
+            circuitBreaker.recordSuccess(gateway, paymentMethod);
+        } else {
+            circuitBreaker.recordFailure(gateway, paymentMethod, config);
+        }
     }
 
     public double successRate(String gateway, String paymentMethod, int slidingWindowMinutes) {
@@ -62,11 +79,10 @@ public class GatewayHealthMetrics {
                 .orElse(500); // conservative default if truly no data anywhere
     }
 
-    /** Current circuit breaker state as last recorded; Day 8 owns actually transitioning this. */
     public String circuitBreakerState(String gateway, String paymentMethod) {
-        return fallbackSnapshot(gateway, paymentMethod)
-                .map(GatewayHealthMetricsSnapshot::getCircuitBreakerState)
-                .orElse("CLOSED");
+        GatewayConfig config = gatewayConfigRepository.findById(gateway)
+                .orElseThrow(() -> new IllegalStateException("Unknown gateway: " + gateway));
+        return circuitBreaker.getState(gateway, paymentMethod, config).name();
     }
 
     private List<Outcome> recentOutcomes(String gateway, String paymentMethod, int slidingWindowMinutes) {

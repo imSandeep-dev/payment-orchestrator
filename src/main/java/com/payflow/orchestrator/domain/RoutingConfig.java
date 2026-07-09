@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Maps routing_config (Day 2, V1/V11): configurable weights for the A3.2 scoring formula. */
 @Entity
 @Table(name = "routing_config")
 @Getter
@@ -62,5 +61,22 @@ public class RoutingConfig {
         r.createdAt = now;
         r.updatedAt = now;
         return r;
+    }
+
+    public void applyWeights(BigDecimal weightSuccessRate, BigDecimal weightLatency, BigDecimal weightCost,
+                             BigDecimal weightHealth, BigDecimal weightPaymentMethodFit,
+                             BigDecimal degradedScoreGapThreshold, int slidingWindowMinutes) {
+        this.weightSuccessRate = weightSuccessRate;
+        this.weightLatency = weightLatency;
+        this.weightCost = weightCost;
+        this.weightHealth = weightHealth;
+        this.weightPaymentMethodFit = weightPaymentMethodFit;
+        this.degradedScoreGapThreshold = degradedScoreGapThreshold;
+        this.slidingWindowMinutes = slidingWindowMinutes;
+    }
+
+    @PreUpdate
+    void touchUpdatedAt() {
+        this.updatedAt = Instant.now();
     }
 }
