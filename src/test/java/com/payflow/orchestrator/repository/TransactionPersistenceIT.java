@@ -5,7 +5,6 @@ import com.payflow.orchestrator.domain.Transaction;
 import com.payflow.orchestrator.domain.TransactionState;
 import com.payflow.orchestrator.domain.TransactionStateLog;
 import jakarta.persistence.EntityManager;
-import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -23,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Real PostgreSQL via Testcontainers — deliberately NOT H2 or another
- * in-memory substitute. Section A6.2's money-safety rules and the JSONB
+ * in-memory substitute.money-safety rules and the JSONB
  * audit trail only mean something if tested against the exact database
  * engine we deploy on; an in-memory stand-in could silently accept
  * something real Postgres would reject.

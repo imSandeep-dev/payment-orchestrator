@@ -18,6 +18,7 @@ spring:
       ddl-auto: validate
     open-in-view: false
 
+
 management:
   endpoints:
     web:
@@ -32,4 +33,10 @@ logging:
     root: info
     com.payflow.orchestrator: debug
 
-
+app:
+  webhook-secrets:
+    gateways:
+      razorpay: dev-razorpay-webhook-secret-change-me
+      stripe: dev-stripe-webhook-secret-change-me
+      payu: dev-payu-webhook-secret-change-me
+      upi: dev-upi-webhook-secret-change-me
