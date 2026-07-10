@@ -52,8 +52,7 @@ public class IdempotencyService {
             if (!entry.getRequestHash().equals(requestHash)) {
                 return IdempotencyOutcome.keyReusedWithDifferentPayload();
             }
-            return IdempotencyOutcome.cached(entry.getResponseCode(), entry.getResponseBody());
-        }
+            return IdempotencyOutcome.cached(entry.getResponseCode(), entry.getResponseBody(), entry.getTransactionId());        }
 
         IdempotencyKeyEntry fresh = IdempotencyKeyEntry.startProcessing(merchantId, idempotencyKey, requestHash);
         repository.saveAndFlush(fresh);

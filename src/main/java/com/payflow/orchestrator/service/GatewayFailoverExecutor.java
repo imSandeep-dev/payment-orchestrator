@@ -68,8 +68,7 @@ public class GatewayFailoverExecutor {
 
             TransactionEvent event = GatewayOutcomeMapper.forAuthorize(result.outcome());
             state = stateMachine.transition(state, event);
-            attempts.add(new AttemptOutcome(gatewayName, result.outcome(), state, elapsedMs));
-
+            attempts.add(new AttemptOutcome(gatewayName, result.outcome(), state, elapsedMs, result.rawResponseJson()));
             if (state == TransactionState.AUTHORISED) {
                 return new FailoverResult(state, gatewayName, result.gatewayReference(), attempts);
             }

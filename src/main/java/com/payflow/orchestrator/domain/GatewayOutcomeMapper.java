@@ -35,4 +35,41 @@ public final class GatewayOutcomeMapper {
                     "NOT_SUPPORTED is not a valid authorize() outcome for any gateway");
         };
     }
+
+    /**
+     * Distinguishes full vs. partial capture by comparing what's being
+     * captured now against what was still available to capture.
+     */
+    public static TransactionEvent forCapture(GatewayOutcome outcome, long captureAmountPaise, long remainingBeforeCapture) {
+        if (outcome == GatewayOutcome.SUCCESS) {
+            return captureAmountPaise == remainingBeforeCapture
+                    ? TransactionEvent.GATEWAY_CAPTURE_SUCCESS
+                    : TransactionEvent.GATEWAY_PARTIAL_CAPTURE;
+        }
+        return TransactionEvent.GATEWAY_CAPTURE_ERROR;
+    }
+
+    /**
+     * The 24-state design has no VOID_FAILED state —
+     * VOID_INITIATED's only outgoing event is GATEWAY_VOID_SUCCESS. A failed
+     * void therefore has no valid TransactionEvent to map to; this throws
+     * rather than silently mapping to something incorrect. Callers MUST check
+     * GatewayResult.isSuccess() before calling this.
+     */
+    public static TransactionEvent forVoid(GatewayOutcome outcome) {
+        if (outcome != GatewayOutcome.SUCCESS) {
+            throw new IllegalStateException(
+                    "Void failure has no modeled state-machine transition (see ADR-007 backlog item). Outcome was: " + outcome);
+        }
+        return TransactionEvent.GATEWAY_VOID_SUCCESS;
+    }
+
+    public static TransactionEvent forRefund(GatewayOutcome outcome, long refundAmountPaise, long remainingBeforeRefund) {
+        if (outcome == GatewayOutcome.SUCCESS) {
+            return refundAmountPaise == remainingBeforeRefund
+                    ? TransactionEvent.GATEWAY_REFUND_SUCCESS
+                    : TransactionEvent.GATEWAY_PARTIAL_REFUND;
+        }
+        return TransactionEvent.GATEWAY_REFUND_ERROR;
+    }
 }
