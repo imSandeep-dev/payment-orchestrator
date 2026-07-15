@@ -21,6 +21,20 @@ public abstract class PaymentGatewayContractTest {
     }
 
     @Test
+    void checkStatusConfirmsExpectedStateOnSuccessInstruction() {
+        GatewayStatusResult result = gateway().checkStatus(
+                new StatusCheckRequest("ref-123", "CAPTURED", MockInstruction.success()));
+        assertThat(result.reportedState()).isEqualTo("CAPTURED");
+    }
+
+    @Test
+    void checkStatusReportsFailedOnErrorInstructions() {
+        GatewayStatusResult result = gateway().checkStatus(
+                new StatusCheckRequest("ref-123", "CAPTURED", new MockInstruction(MockResponseType.SERVER_ERROR, 0, false)));
+        assertThat(result.reportedState()).isEqualTo("FAILED");
+    }
+
+    @Test
     void successInstructionReturnsSuccessWithGatewayReference() {
         GatewayResult result = gateway().authorize(
                 authRequest(new MockInstruction(MockResponseType.SUCCESS, 0, false)));

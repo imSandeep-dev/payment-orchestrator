@@ -15,11 +15,6 @@ class TransactionStateMachineTest {
 
     private final TransactionStateMachine stateMachine = new TransactionStateMachine();
 
-    // ---------------------------------------------------------------
-    // Valid transitions: every row of docs/state-machine.md's transition
-    // table (39 total) — satisfies the "minimum 20 valid test cases" bar.
-    // ---------------------------------------------------------------
-
     @ParameterizedTest(name = "{0} + {1} -> {2}")
     @MethodSource("validTransitions")
     void validTransitionsSucceed(TransactionState from, TransactionEvent event, TransactionState expectedTo) {
@@ -68,7 +63,8 @@ class TransactionStateMachineTest {
                 Arguments.of(TransactionState.REFUND_FAILED, TransactionEvent.RETRY_REFUND, TransactionState.REFUND_INITIATED),
                 Arguments.of(TransactionState.PARTIALLY_REFUNDED, TransactionEvent.REFUND_INITIATED, TransactionState.REFUND_INITIATED),
                 Arguments.of(TransactionState.DISPUTE_OPENED, TransactionEvent.DISPUTE_RESOLVED, TransactionState.DISPUTE_RESOLVED),
-                Arguments.of(TransactionState.AUTH_INITIATED, TransactionEvent.MANDATE_EXPIRED, TransactionState.AUTH_EXPIRED)
+                Arguments.of(TransactionState.AUTH_INITIATED, TransactionEvent.MANDATE_EXPIRED, TransactionState.AUTH_EXPIRED),
+                Arguments.of(TransactionState.PARTIALLY_CAPTURED, TransactionEvent.RECONCILIATION_OVERRIDE, TransactionState.RECONCILIATION_MISMATCH)
         );
     }
 

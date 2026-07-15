@@ -57,4 +57,14 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.BAD_GATEWAY, "GATEWAY_OPERATION_FAILED",
                 "Gateway " + action + " failed: " + detail, Map.of());
     }
+
+    public static ApiException routingWeightsInvalid(java.math.BigDecimal sum) {
+        return new ApiException(HttpStatus.BAD_REQUEST, "PAYMENT_ROUTING_WEIGHTS_INVALID",
+                "Routing weights must sum to 1.0 (got %s) — mirrors the DB-level weights_sum_to_one CHECK constraint (Day 2, V1)".formatted(sum),
+                Map.of("sum", sum.toString()));
+    }
+
+    public static ApiException gatewayNotFound(String name) {
+        return new ApiException(HttpStatus.NOT_FOUND, "GATEWAY_NOT_FOUND", "No gateway named " + name, Map.of("gateway", name));
+    }
 }

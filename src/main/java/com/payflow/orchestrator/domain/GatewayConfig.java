@@ -102,4 +102,18 @@ public class GatewayConfig {
         g.updatedAt = now;
         return g;
     }
+
+    public void applyUpdate(boolean enabled, BigDecimal costPercentage, long costFixedPaise, Integer rateLimitPerSecond,
+                            int circuitBreakerFailureThreshold, int circuitBreakerTimeoutSeconds, int circuitBreakerHalfOpenMaxCalls) {
+        this.enabled = enabled;
+        this.costPercentage = costPercentage;
+        this.costFixedPaise = costFixedPaise;
+        this.rateLimitPerSecond = rateLimitPerSecond;
+        this.circuitBreakerFailureThreshold = circuitBreakerFailureThreshold;
+        this.circuitBreakerTimeoutSeconds = circuitBreakerTimeoutSeconds;
+        this.circuitBreakerHalfOpenMaxCalls = circuitBreakerHalfOpenMaxCalls;
+    }
+
+    @PreUpdate
+    void touchUpdatedAt() { this.updatedAt = Instant.now(); }
 }

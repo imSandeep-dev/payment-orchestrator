@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.payflow.orchestrator.domain.TransactionState.AUTH_INITIATED;
+import static com.payflow.orchestrator.domain.TransactionEvent.RECONCILIATION_OVERRIDE;
+import static com.payflow.orchestrator.domain.TransactionState.*;
 
 @Component
 public class TransactionStateMachine {
@@ -36,7 +37,7 @@ public class TransactionStateMachine {
     }
 
     public TransactionState adminOverride(TransactionState currentState, TransactionState targetState) {
-        if (currentState != TransactionState.RECONCILIATION_MISMATCH) {
+        if (currentState != RECONCILIATION_MISMATCH) {
             throw new InvalidStateTransitionException(currentState, TransactionEvent.ADMIN_OVERRIDE, Set.of());
         }
         Objects.requireNonNull(targetState, "targetState must not be null for an admin override");
@@ -73,25 +74,26 @@ public class TransactionStateMachine {
         addTransition(table, TransactionState.VOID_INITIATED, TransactionEvent.GATEWAY_VOID_SUCCESS, TransactionState.VOIDED);
 
         addTransition(table, TransactionState.CAPTURE_INITIATED, TransactionEvent.GATEWAY_CAPTURE_SUCCESS, TransactionState.CAPTURED);
-        addTransition(table, TransactionState.CAPTURE_INITIATED, TransactionEvent.GATEWAY_PARTIAL_CAPTURE, TransactionState.PARTIALLY_CAPTURED);
+        addTransition(table, TransactionState.CAPTURE_INITIATED, TransactionEvent.GATEWAY_PARTIAL_CAPTURE, PARTIALLY_CAPTURED);
         addTransition(table, TransactionState.CAPTURE_INITIATED, TransactionEvent.GATEWAY_CAPTURE_ERROR, TransactionState.CAPTURE_FAILED);
 
         addTransition(table, TransactionState.CAPTURE_FAILED, TransactionEvent.RETRY_CAPTURE, TransactionState.CAPTURE_INITIATED);
         addTransition(table, TransactionState.CAPTURE_FAILED, TransactionEvent.VOID_INITIATED, TransactionState.VOID_INITIATED);
 
-        addTransition(table, TransactionState.PARTIALLY_CAPTURED, TransactionEvent.CAPTURE_INITIATED, TransactionState.CAPTURE_INITIATED);
-        addTransition(table, TransactionState.PARTIALLY_CAPTURED, TransactionEvent.REFUND_INITIATED, TransactionState.REFUND_INITIATED);
-        addTransition(table, TransactionState.PARTIALLY_CAPTURED, TransactionEvent.VOID_INITIATED, TransactionState.VOID_INITIATED);
-        addTransition(table, TransactionState.PARTIALLY_CAPTURED, TransactionEvent.GATEWAY_SETTLED, TransactionState.SETTLED);
+        addTransition(table, PARTIALLY_CAPTURED, TransactionEvent.CAPTURE_INITIATED, TransactionState.CAPTURE_INITIATED);
+        addTransition(table, PARTIALLY_CAPTURED, TransactionEvent.REFUND_INITIATED, TransactionState.REFUND_INITIATED);
+        addTransition(table, PARTIALLY_CAPTURED, TransactionEvent.VOID_INITIATED, TransactionState.VOID_INITIATED);
+        addTransition(table, PARTIALLY_CAPTURED, TransactionEvent.GATEWAY_SETTLED, TransactionState.SETTLED);
+        addTransition(table, PARTIALLY_CAPTURED, RECONCILIATION_OVERRIDE, RECONCILIATION_MISMATCH);
 
         addTransition(table, TransactionState.CAPTURED, TransactionEvent.REFUND_INITIATED, TransactionState.REFUND_INITIATED);
         addTransition(table, TransactionState.CAPTURED, TransactionEvent.GATEWAY_SETTLED, TransactionState.SETTLED);
         addTransition(table, TransactionState.CAPTURED, TransactionEvent.DISPUTE_OPENED, TransactionState.DISPUTE_OPENED);
-        addTransition(table, TransactionState.CAPTURED, TransactionEvent.RECONCILIATION_OVERRIDE, TransactionState.RECONCILIATION_MISMATCH);
+        addTransition(table, TransactionState.CAPTURED, RECONCILIATION_OVERRIDE, RECONCILIATION_MISMATCH);
 
         addTransition(table, TransactionState.SETTLED, TransactionEvent.REFUND_INITIATED, TransactionState.REFUND_INITIATED);
         addTransition(table, TransactionState.SETTLED, TransactionEvent.DISPUTE_OPENED, TransactionState.DISPUTE_OPENED);
-        addTransition(table, TransactionState.SETTLED, TransactionEvent.RECONCILIATION_OVERRIDE, TransactionState.RECONCILIATION_MISMATCH);
+        addTransition(table, TransactionState.SETTLED, RECONCILIATION_OVERRIDE, RECONCILIATION_MISMATCH);
 
         addTransition(table, TransactionState.REFUND_INITIATED, TransactionEvent.GATEWAY_REFUND_SUCCESS, TransactionState.REFUNDED);
         addTransition(table, TransactionState.REFUND_INITIATED, TransactionEvent.GATEWAY_PARTIAL_REFUND, TransactionState.PARTIALLY_REFUNDED);

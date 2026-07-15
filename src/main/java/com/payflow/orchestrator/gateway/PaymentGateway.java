@@ -17,4 +17,17 @@ public interface PaymentGateway {
     GatewayResult voidAuthorization(VoidRequest request);
 
     GatewayResult refund(RefundRequest request);
+
+    default GatewayStatusResult checkStatus(StatusCheckRequest request) {
+        MockInstruction instruction = request.mockInstruction();
+        if (instruction.gatewayDown()) {
+            return new GatewayStatusResult("UNKNOWN", "{\"error\":\"gateway_unreachable\"}");
+        }
+        return switch (instruction.responseType()) {
+            case SUCCESS -> new GatewayStatusResult(request.expectedState(),
+                    "{\"status\":\"%s\"}".formatted(request.expectedState()));
+            case DECLINE, SERVER_ERROR, TIMEOUT, RATE_LIMIT ->
+                    new GatewayStatusResult("FAILED", "{\"status\":\"failed\"}");
+        };
+    }
 }

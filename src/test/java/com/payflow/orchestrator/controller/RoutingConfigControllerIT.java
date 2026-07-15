@@ -5,13 +5,10 @@ import com.payflow.orchestrator.repository.RoutingConfigRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -37,26 +34,34 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Testcontainers
 class RoutingConfigControllerIT {
 
+
+
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
-
-    @Value("${local.server.port}")
-    private int port;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
     private RoutingConfigRepository repository;
 
+    @LocalServerPort
+    private int port;
+
     private String url(String path) {
         return "http://localhost:" + port + path;
     }
 
+    private HttpHeaders authHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-API-Key", "dev-api-key-change-me");
+        return headers;
+    }
+
     @Test
     void getReturnsSeededDefaultConfig() {
-        ResponseEntity<RoutingConfigResponse> response =
-                restTemplate.getForEntity(url("/api/v1/routing/config"), RoutingConfigResponse.class);
+        ResponseEntity<RoutingConfigResponse> response = restTemplate.exchange(
+                url("/api/v1/routing/config"), HttpMethod.GET, new HttpEntity<>(authHeaders()), RoutingConfigResponse.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
@@ -73,15 +78,14 @@ class RoutingConfigControllerIT {
                 new BigDecimal("0.15"), new BigDecimal("0.10"), new BigDecimal("0.25"), 10);
 
         ResponseEntity<RoutingConfigResponse> response = restTemplate.exchange(
-                url("/api/v1/routing/config"), HttpMethod.PUT,
-                new HttpEntity<>(request), RoutingConfigResponse.class);
+                url("/api/v1/routing/config"), HttpMethod.PUT, new HttpEntity<>(request, authHeaders()), RoutingConfigResponse.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().weightSuccessRate()).isEqualByComparingTo("0.40");
         assertThat(response.getBody().slidingWindowMinutes()).isEqualTo(10);
 
         RoutingConfig reloaded = repository.findById("default").orElseThrow();
-        assertThat(reloaded.getCreatedAt()).isEqualTo(originalCreatedAt); // NOT overwritten by the update
+        assertThat(reloaded.getCreatedAt()).isEqualTo(originalCreatedAt);
     }
 
     @Test
@@ -90,12 +94,19 @@ class RoutingConfigControllerIT {
                 new BigDecimal("0.50"), new BigDecimal("0.50"), new BigDecimal("0.50"),
                 new BigDecimal("0.50"), new BigDecimal("0.50"), new BigDecimal("0.20"), 5);
 
-        // Unlike TestRestTemplate, plain RestTemplate throws on 4xx/5xx
-        // instead of returning them as a normal ResponseEntity.
-        assertThatThrownBy(() -> restTemplate.exchange(
-                url("/api/v1/routing/config"), HttpMethod.PUT,
-                new HttpEntity<>(badRequest), RoutingConfigResponse.class))
-                .isInstanceOf(HttpStatusCodeException.class);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url("/api/v1/routing/config"), HttpMethod.PUT,
+                    new HttpEntity<>(badRequest, authHeaders()), String.class);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(response.getBody()).contains("PAYMENT_ROUTING_WEIGHTS_INVALID");
+        } catch (org.springframework.web.client.HttpStatusCodeException ex) {
+            // Some RestTemplate/error-handler configurations throw on 4xx/5xx
+            // instead of returning a ResponseEntity — handle both paths so this
+            // test isn't coupled to that implementation detail.
+            assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(ex.getResponseBodyAsString()).contains("PAYMENT_ROUTING_WEIGHTS_INVALID");
+        }
     }
 
     @BeforeEach

@@ -1,6 +1,7 @@
 package com.payflow.orchestrator.controller;
 
 import com.payflow.orchestrator.domain.RoutingConfig;
+import com.payflow.orchestrator.exception.ApiException;
 import com.payflow.orchestrator.repository.RoutingConfigRepository;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,14 +35,7 @@ public class RoutingConfigController {
         BigDecimal sum = request.weightSuccessRate().add(request.weightLatency()).add(request.weightCost())
                 .add(request.weightHealth()).add(request.weightPaymentMethodFit());
         if (sum.subtract(BigDecimal.ONE).abs().compareTo(WEIGHT_SUM_TOLERANCE) > 0) {
-            // Once the global @ControllerAdvice exists
-            // map this to a clean 400 PAYMENT_ROUTING_WEIGHTS_INVALID.
-            // For now, Spring's default error handler returns 500 for an uncaught
-            // IllegalArgumentException — the request IS rejected, just not with the
-            // final polished error shape yet.
-            throw new IllegalArgumentException(
-                    "Routing weights must sum to 1.0 (got %s) — mirrors the DB-level weights_sum_to_one CHECK constraint (Day 2, V1)"
-                            .formatted(sum));
+            throw ApiException.routingWeightsInvalid(sum);
         }
 
         // Fetch-mutate-save on the MANAGED entity — never construct a fresh

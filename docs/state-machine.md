@@ -6,8 +6,8 @@ Twenty-four states, enforced in application code by `TransactionStateMachine`
 data-integrity backstop, not the enforcement mechanism itself.
 
 ## Why more than the required 12 states
-Section A2.2 requires a minimum of 12 and explicitly lists 9 "additional
-states you should consider" — all 9 are included below because each maps to
+Requires a minimum of 12 and explicitly lists nine "additional
+states you should consider" — all 9 are included below because each map to
 a concrete requirement elsewhere in the spec:
 
 | Extra state                        | Required by                                               |
@@ -167,3 +167,11 @@ from AUTH_INITIATED to AUTH_EXPIRED. Added a dedicated MANDATE_EXPIRED
 event rather than overloading HOLD_EXPIRED, since the two represent
 genuinely different real-world triggers (elapsed capture window vs.
 customer non-response), even though they share a target state.
+
+### Added PARTIALLY_CAPTURED → RECONCILIATION_MISMATCH
+
+Building the reconciliation engine's settlement check (A5.5, FS-11)
+revealed CAPTURED and SETTLED both had a RECONCILIATION_OVERRIDE edge but
+PARTIALLY_CAPTURED did not — an oversight, since a partially captured
+transaction is exactly as eligible for a later gateway-side dispute as a
+fully captured one. Added for parity.
