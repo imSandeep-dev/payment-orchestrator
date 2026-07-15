@@ -43,6 +43,7 @@ public class TransactionService {
     private final TransactionStateMachine stateMachine;
     private final GatewayResponseSanitizer sanitizer;
     private final Map<String, PaymentGateway> gatewaysByName;
+    private final CaptureRetryExecutor captureRetryExecutor;
 
     public TransactionService(TransactionRepository transactionRepository,
                               TransactionStateLogRepository stateLogRepository,
@@ -52,7 +53,7 @@ public class TransactionService {
                               GatewayFailoverExecutor failoverExecutor,
                               TransactionStateMachine stateMachine,
                               GatewayResponseSanitizer sanitizer,
-                              List<PaymentGateway> gateways, VoidLifecycleRecorder voidLifecycleRecorder) {
+                              List<PaymentGateway> gateways, CaptureRetryExecutor captureRetryExecutor, VoidLifecycleRecorder voidLifecycleRecorder) {
         this.transactionRepository = transactionRepository;
         this.stateLogRepository = stateLogRepository;
         this.refundRepository = refundRepository;
@@ -62,6 +63,7 @@ public class TransactionService {
         this.stateMachine = stateMachine;
         this.sanitizer = sanitizer;
         this.gatewaysByName = gateways.stream().collect(Collectors.toMap(PaymentGateway::getGatewayName, g -> g));
+        this.captureRetryExecutor = captureRetryExecutor;
         this.voidLifecycleRecorder = voidLifecycleRecorder;
     }
 
@@ -152,8 +154,9 @@ public class TransactionService {
         logTransition(txn, txn.getState(), initiated, "CAPTURE_INITIATED", txn.getGatewayReference(), null);
 
         PaymentGateway gateway = gatewaysByName.get(txn.getGateway());
-        GatewayResult result = gateway.capture(new CaptureRequest(
-                txn.getId(), txn.getGatewayReference(), amountPaise, txn.getTraceId(), mockInstruction));
+        GatewayResult result = captureRetryExecutor.captureWithRetry(
+                txn.getGateway(), txn.getId(), txn.getGatewayReference(), amountPaise, txn.getTraceId(),
+                mockInstruction, mockInstruction);
 
         TransactionEvent event = GatewayOutcomeMapper.forCapture(result.outcome(), amountPaise, remaining);
         TransactionState next = stateMachine.transition(initiated, event);
