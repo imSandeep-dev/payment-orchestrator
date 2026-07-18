@@ -16,5 +16,24 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payflow-orchestrator-app
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres        # Docker's internal DNS resolves the service name
+      DB_PORT: 5432            # the CONTAINER-internal port — always 5432 regardless
+        # of the 5433 host mappings above, since this traffic
+      # never leaves the Docker network
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   payflow_pgdata:
