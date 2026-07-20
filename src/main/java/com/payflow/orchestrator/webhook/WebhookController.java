@@ -1,6 +1,7 @@
 package com.payflow.orchestrator.webhook;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,9 +31,13 @@ public class WebhookController {
     @PostMapping("/{gateway}")
     public ResponseEntity<Map<String, String>> receive(@PathVariable String gateway,
                                                        @RequestBody String rawBody,
-                                                       @RequestHeader Map<String, String> headers) throws JsonProcessingException {
+                                                       HttpServletRequest request) throws JsonProcessingException {
         String signatureHeaderName = SIGNATURE_HEADER_BY_GATEWAY.get(gateway);
-        String signature = signatureHeaderName == null ? null : headers.get(signatureHeaderName.toLowerCase());
+        // HttpServletRequest.getHeader() is case-insensitive per the Servlet
+        // spec — fixes a real bug where the previous Map<String,String>
+        // lookup failed for any client that didn't send the header in
+        // exactly lowercase (which is essentially every real HTTP client).
+        String signature = signatureHeaderName == null ? null : request.getHeader(signatureHeaderName);
 
         WebhookPayloadEnvelope payload = jsonMapper.readValue(rawBody, WebhookPayloadEnvelope.class);
         WebhookEventType eventType;
@@ -42,10 +47,10 @@ public class WebhookController {
             return ResponseEntity.badRequest().body(Map.of("message", "Unknown event_type: " + payload.eventType()));
         }
 
-        IncomingWebhookRequest request = new IncomingWebhookRequest(gateway, payload.eventId(), eventType,
+        IncomingWebhookRequest webhookRequest = new IncomingWebhookRequest(gateway, payload.eventId(), eventType,
                 payload.gatewayReference(), payload.amountPaise(), payload.currency(), rawBody, signature);
 
-        WebhookProcessingResult result = processor.process(request);
+        WebhookProcessingResult result = processor.process(webhookRequest);
         HttpStatus status = switch (result.outcome()) {
             case PROCESSED, DUPLICATE_ACKNOWLEDGED -> HttpStatus.OK;
             case SIGNATURE_INVALID -> HttpStatus.UNAUTHORIZED;

@@ -15,7 +15,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -82,6 +81,7 @@ public class TransactionService {
                         .orElseThrow(() -> ApiException.transactionNotFound(idem.cachedTransactionId()));
             }
             case PROCEED -> { /* fall through below */ }
+            default -> throw new IllegalStateException("Unhandled IdempotencyOutcome.Status: " + idem.status());
         }
 
         Transaction txn = Transaction.create(merchantId, merchantOrderId, amountPaise, currency, paymentMethod, UUID.randomUUID());

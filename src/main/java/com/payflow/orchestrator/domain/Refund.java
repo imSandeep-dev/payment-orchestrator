@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 import java.util.UUID;
 
-/** Maps refunds (Day 2, V9). */
 @Entity
 @Table(name = "refunds")
 @Getter

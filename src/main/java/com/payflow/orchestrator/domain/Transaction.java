@@ -4,17 +4,13 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Core transaction record (Section A6.1). Deliberately has NO generic
- * setState(TransactionState) method — see applyState() below for why.
- */
+
 @Entity
 @Table(name = "transactions")
 @Getter

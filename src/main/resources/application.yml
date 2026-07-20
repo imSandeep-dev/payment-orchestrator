@@ -47,5 +47,3 @@ app:
   api-keys:
     keys:
       dev-api-key-change-me: "11111111-1111-1111-1111-111111111111"
-      # DEV/MOCK ONLY — key -> merchantId. Real credential management is
-      # out of scope for this training simulation.
